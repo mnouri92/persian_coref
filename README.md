@@ -1,52 +1,58 @@
-# Higher-order Coreference Resolution with Coarse-to-fine Inference
+# Introduction
+**Pronouns references recognition**, is one of the NLP tasks with goal of detect the references of each pronouns which have been used in text. This project with inspiration of **e2e-coref** detection, is developed to detect the antecedents in persian texts.
 
-## Introduction
-This repository contains the code for replicating results from
+# Usage
+You can clone and run the code of this project by follow this document step by step.
 
-* [Higher-order Coreference Resolution with Coarse-to-fine Inference](https://arxiv.org/abs/1804.05392)
-* [Kenton Lee](http://kentonl.com/), [Luheng He](https://homes.cs.washington.edu/~luheng), and [Luke Zettlemoyer](https://www.cs.washington.edu/people/faculty/lsz)
-* In NAACL 2018
+## step-1
+in first step you must clone the project on your system as follow :
 
-## Getting Started
+```git clone https://github.com/mnouri92/persian_coref.git```
+> if you dont have the git on your system you can download and install that from [Git](https://git-scm.com/downloads)
 
-* Install python (either 2 or 3) requirements: `pip install -r requirements.txt`
-* Download pretrained models at https://drive.google.com/file/d/1fkifqZzdzsOEo0DXMzCFjiNXqsKG_cHi
-  * Move the downloaded file to the root of the repo and extract: `tar -xzvf e2e-coref.tgz`
-* Download GloVe embeddings and build custom kernels by running `setup_all.sh`.
-  * There are 3 platform-dependent ways to build custom TensorFlow kernels. Please comment/uncomment the appropriate lines in the script.
-* To train your own models, run `setup_training.sh`
-  * This assumes access to OntoNotes 5.0. Please edit the `ontonotes_path` variable.
+## Step-2
+The project is developed by **Python** programming language and using some important packages related to Machine-Learning programming such as TensorFlow. 
+> if you haven't installed Python on your system you can download and install from [Python.org](https://www.python.org/downloads/)
 
-## Training Instructions
+Therefore after cloning the project, move to project's root directory and install requirements by :
 
-* Experiment configurations are found in `experiments.conf`
-* Choose an experiment that you would like to run, e.g. `best`
-* Training: `python train.py <experiment>`
-* Results are stored in the `logs` directory and can be viewed via TensorBoard.
-* Evaluation: `python evaluate.py <experiment>`
+``` python -m pip install -r requirements.txt```
 
-## Demo Instructions
+## step-3
+For train the model you need some file such as Persian word embedding, train and test data and convert the data to desirable format which is required to train the model that all of these files will be downloaded and convert by running the pre_process.sh file. You can do this by run the bellow command in terminal :
 
-* Command-line demo: `python demo.py final`
-* To run the demo with other experiments, replace `final` with your configuration name.
+``` ./pre_process.sh ```
 
-## Batched Prediction Instructions
+## step-4
+After that all of required files have been provided you can train the model by run the bellow command in terminal :
 
-* Create a file where each line is in the following json format (make sure to strip the newlines so each line is well-formed json):
-```
-{
-  "clusters": [],
-  "doc_key": "nw",
-  "sentences": [["This", "is", "the", "first", "sentence", "."], ["This", "is", "the", "second", "."]],
-  "speakers": [["spk1", "spk1", "spk1", "spk1", "spk1", "spk1"], ["spk2", "spk2", "spk2", "spk2", "spk2"]]
-}
-```
-  * `clusters` should be left empty and is only used for evaluation purposes.
-  * `doc_key` indicates the genre, which can be one of the following: `"bc", "bn", "mz", "nw", "pt", "tc", "wb"`
-  * `speakers` indicates the speaker of each word. These can be all empty strings if there is only one known speaker.
-* Run `python predict.py <experiment> <input_file> <output_file>`, which outputs the input jsonlines with predicted clusters.
+``` python train.py best ```
 
-## Other Quirks
+> In above command the 'best' keyword refer to configuration details that have been defined for model. the 'best' configuration set is defined for train step and the 'final' configuration set is defined for evaluate and prediction. you can change them from **experiments.conf** file.
 
-* It does not use GPUs by default. Instead, it looks for the `GPU` environment variable, which the code treats as shorthand for `CUDA_VISIBLE_DEVICES`.
-* The training runs indefinitely and needs to be terminated manually. The model generally converges at about 400k steps.
+After train the model you can evaluate it by running the **evaluate.sh** file using bellow command in terminal :
+
+``` ./evaluate.sh ```
+
+## step-5
+
+After running the codes , the trained model will be saved in ./logs/final directory. The trained model that saved on .logs/final directory is in checkpoints format that you will need SavedModel format of that to deploy as web API using TensorFlow Serving module. The export_saved_model.sh file has been provided for this reason that you can use that as follow to export the SavedModel format of checkpoints saved model.
+
+``` python export_saved_model.py final <export_path> <version_of_model> ```
+
+
+## step-6
+
+Now the SavedModel format of trained model is ready in your chosen directory.
+
+**TensorFlow Serving** is one of the useful module from TFX that is used to serve the SavedModel as a web API by implements the TF Server on the host system and running the web API services on it. you can use this module directly but simpler way is using TensorFlow/Serving image of **Docker** that let you to implement the TensorFlow server as an **Docker Container** on the host system.
+
+> If you haven't installed Docker in your system you can download and install it from [Docker](https://www.docker.com/)
+
+You can run the web API service by trained model as Docker Container using the fhe following command terminal :
+
+``` docker run -p 8501:8501 -p 8500:8500 --name <Container_name> --mount type=bind,source=<path_of_SavedModel>,target=/models/<model_name> -e MODEL_NAME=<model_name> -t tensorflow/serving & ```
+
+The above code will implement the TF Server as a Docker container on the host system and then run the web API service on TF Server. Finally map the port of container to the system's port (the 8501 port are used to communicate with the web API by RestFul standard and 8500 are used to communicate by gRPC standard).
+
+After running the above code the implemented web API can be accessed via the **http://localhost:8501/v1/models/model_name:predict**
