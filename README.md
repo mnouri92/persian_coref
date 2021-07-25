@@ -34,11 +34,16 @@ After train the model you can evaluate it by running the **evaluate.sh** file us
 
 ``` ./evaluate.sh ```
 
+> Also you can test trained model by using bellow command that <input_file_path> refers to path of input file that contains input persian text and <output_file_path> refers to output file that the result of the process will be written in it.
+> ``` python predict.py <input_file_path> <output_file_path> ```
+
 ## step-5
 
 After running the codes , the trained model will be saved in ./logs/final directory. The trained model that saved on .logs/final directory is in checkpoints format that you will need SavedModel format of that to deploy as web API using TensorFlow Serving module. The export_saved_model.sh file has been provided for this reason that you can use that as follow to export the SavedModel format of checkpoints saved model.
 
 ``` python export_saved_model.py final <export_path> <version_of_model> ```
+
+> According to using custom ops in this project you may face some problem with using of TF_Serving that you can skip steps till step 7
 
 
 ## step-6
@@ -56,3 +61,8 @@ You can run the web API service by trained model as Docker Container using the f
 The above code will implement the TF Server as a Docker container on the host system and then run the web API service on TF Server. Finally map the port of container to the system's port (the 8501 port are used to communicate with the web API by RestFul standard and 8500 are used to communicate by gRPC standard).
 
 After running the above code the implemented web API can be accessed via the **http://localhost:8501/v1/models/model_name:predict**
+
+## step-7
+if you face some problems related to using custom ops and TF_Serving module , you can replace the steps 5 and 6 with this one. after training your model you can run the script_client.py that implement a web service on your system. you would be able to have access to this web service with **http://0.0.0.0:5001/persian_coref** address that take a persian text and return the results of process in json structure.
+
+> you could run the file using ```screen python script_client.py ```
